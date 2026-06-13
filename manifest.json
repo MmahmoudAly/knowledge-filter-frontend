@@ -1,0 +1,19 @@
+{
+    "name": "Knowledge Filter",
+    "short_name": "KF",
+    "theme_color": "#4CAF50",
+    "background_color": "#fff",
+    "icons": [
+        {
+            "src": "/src/img/icon-192.png",
+            "sizes": "192x192"
+        },
+        {
+            "src": "/src/img/icon-512.png",
+            "sizes": "512x512"
+        }
+    ],
+    "start_url": "/",
+    "display": "standalone",
+    "description": "A context-aware learning application"
+}

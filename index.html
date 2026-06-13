@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Filter</title>
+    <style>
+        /* Internal CSS for the UI */
+        body {
+            dir: rtl;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            display: flex;
+            justify-content: space-between;
+        }
+        input[type="text"] {
+            width: 90%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .context-selector {
+            margin-bottom: 20px;
+        }
+        button.start-learn {
+            padding: 10px 30px;
+            background-color: #FFC107;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .notice {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Knowledge Filter</h1>
+        <form action="/add-link" method="post">
+            <input type="text" name="url" placeholder="Enter URL">
+            <button type="submit">Save</button>
+        </form>
+        <div class="context-selector">
+            <label for="time">Time:</label>
+            <select id="time" name="time">
+                <option value="10">10 minutes</option>
+                <option value="20">20 minutes</option>
+                <option value="45">45 minutes</option>
+            </select>
+            <label for="noise-headphones">Environment:</label>
+            <select id="noise-headphones" name="noise_headphones">
+                <option value="">No headphones</option>
+                <option value="headphones">Headphones plugged in</option>
+            </select>
+        </div>
+        <button class="start-learn" onclick="startLearning()">Start Learning</button>
+    </div>
+
+    <script type="module" src="/src/js/main.js"></script>
+</body>
+</html>
