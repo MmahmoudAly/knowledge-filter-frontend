@@ -63,22 +63,40 @@
     const BACKEND_URL = "https://mmahmoudaly-knowledge-filter-backend.hf.space";
     async function saveLink() {
         const url = document.getElementById('urlInput').value;
-        if(!url) return alert("من فضلك أدخل الرابط أولاً!");
+    if(!url) return alert("من فضلك أدخل الرابط أولاً!");
 
-        try {
-            const response = await fetch(`${BACKEND_URL}/add-link`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: url })
-            });
-            const data = await response.json();
-            if(data.status === "success") {
-                alert(`تم الحفظ بنجاح!\nالمحتوى: ${data.data.title}\nالوقت المقدر: ${data.data.estimated_read_time} دقيقة.`);
-                document.getElementById('urlInput').value = "";
-            }
-        } catch (error) {
-            alert("حدث خطأ أثناء الاتصال بالسيرفر الخلفي.");
+    // تغيير نص الزر مؤقتاً ليعرف المستخدم أن النظام يعمل
+    const btn = document.querySelector("button[onclick='saveLink()']");
+    const originalText = btn.innerHTML;
+    btn.innerHTML = "جاري الفحص والحفظ... ⏳";
+    btn.disabled = true;
+
+    try {
+        console.log("جاري إرسال الطلب إلى:", `${BACKEND_URL}/add-link`);
+        const response = await fetch(`${BACKEND_URL}/add-link`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url })
+        });
+
+        console.log("حالة الرد من السيرفر:", response.status);
+        const data = await response.json();
+        console.log("البيانات المستلمة:", data);
+
+        if(data.status === "success" || response.ok) {
+            alert(`🎉 تم الحفظ بنجاح عالي!\nالمحتوى: ${data.data?.title || "رابط مضاف"}\nالوقت المقدر: ${data.data?.estimated_read_time || 5} دقائق.`);
+            document.getElementById('urlInput').value = "";
+        } else {
+            alert("السيرفر استجاب ولكن حدثت مشكلة في معالجة البيانات.");
         }
+    } catch (error) {
+        console.error("تفاصيل الخطأ:", error);
+        alert("تعذر الاتصال بالسيرفر. تأكد من أن سيرفر Hugging Face في وضع Running ولم يتوقف.");
+    } finally {
+        // إعادة الزر لوضعه الطبيعي
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
     }
 
     function getSmartRecommendation() {
