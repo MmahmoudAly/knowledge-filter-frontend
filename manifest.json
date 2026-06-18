@@ -1,19 +1,15 @@
 {
-    "name": "Knowledge Filter",
-    "short_name": "KF",
-    "theme_color": "#4CAF50",
-    "background_color": "#fff",
-    "icons": [
-        {
-            "src": "/src/img/icon-192.png",
-            "sizes": "192x192"
-        },
-        {
-            "src": "/src/img/icon-512.png",
-            "sizes": "512x512"
-        }
-    ],
-    "start_url": "/",
-    "display": "standalone",
-    "description": "A context-aware learning application"
+  "name": "Knowledge Filter",
+  "short_name": "K-Filter",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f4f7f6",
+  "theme_color": "#2ecc71",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3514/3514488.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }

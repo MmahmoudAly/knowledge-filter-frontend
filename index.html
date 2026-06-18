@@ -1,84 +1,120 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knowledge Filter</title>
+    <title>مصفاة المعرفة الذكية</title>
+    <link rel="manifest" href="manifest.json">
     <style>
-        /* Internal CSS for the UI */
-        body {
-            dir: rtl;
-            font-family: Arial, sans-serif;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        form {
-            display: flex;
-            justify-content: space-between;
-        }
-        input[type="text"] {
-            width: 90%;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            box-sizing: border-box;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .context-selector {
-            margin-bottom: 20px;
-        }
-        button.start-learn {
-            padding: 10px 30px;
-            background-color: #FFC107;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .notice {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h2 { text-align: center; color: #2c3e50; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="text"], select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 14px; background-color: #2ecc71; border: none; color: white; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.3s; }
+        button:hover { background-color: #27ae60; }
+        .card { background: #eef9f2; border-right: 5px solid #2ecc71; padding: 15px; margin-top: 15px; border-radius: 4px; }
+        .warning-badge { background-color: #ffeaa7; border-right: 5px solid #fdcb6e; padding: 10px; margin-top: 10px; font-size: 14px; border-radius: 4px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Knowledge Filter</h1>
-        <form action="/add-link" method="post">
-            <input type="text" name="url" placeholder="Enter URL">
-            <button type="submit">Save</button>
-        </form>
-        <div class="context-selector">
-            <label for="time">Time:</label>
-            <select id="time" name="time">
-                <option value="10">10 minutes</option>
-                <option value="20">20 minutes</option>
-                <option value="45">45 minutes</option>
-            </select>
-            <label for="noise-headphones">Environment:</label>
-            <select id="noise-headphones" name="noise_headphones">
-                <option value="">No headphones</option>
-                <option value="headphones">Headphones plugged in</option>
-            </select>
-        </div>
-        <button class="start-learn" onclick="startLearning()">Start Learning</button>
+
+<div class="container">
+    <h2>⏱️ مصفاة المعرفة الذكية (MVP)</h2>
+    <hr>
+    
+    <div class="form-group">
+        <label for="urlInput">أضف رابطاً جديداً (مقال أو يوتيوب):</label>
+        <input type="text" id="urlInput" placeholder="https://example.com/article">
+        <button onclick="saveLink()" style="margin-top: 10px; background-color: #3498db;">حفظ الرابط ذكياً 💾</button>
+    </div>
+    
+    <hr>
+    
+    <h3>🧠 حدد سياقك الحالي لنتعلم:</h3>
+    <div class="form-group">
+        <label for="timeSelect">كم من الوقت لديك الآن؟</label>
+        <select id="timeSelect">
+            <option value="10">10 دقائق أو أقل</option>
+            <option value="20">20 دقيقة</option>
+            <option value="45">45 دقيقة</option>
+        </select>
     </div>
 
-    <script type="module" src="/src/js/main.js"></script>
+    <div class="form-group">
+        <label for="noiseSelect">الحالة البيئية المحيطة بك:</label>
+        <select id="noiseSelect">
+            <option value="quiet">مكان هادئ تماماً 🤫</option>
+            <option value="noisy_no_headphones">مكان صاخب بدون سماعات أذن 🔊</option>
+            <option value="noisy_with_headphones">مكان صاخب ولكن أرتدي سماعات أذن 🎧</option>
+        </select>
+    </div>
+
+    <button onclick="getSmartRecommendation()">ابدأ التعلم الآن 🚀</button>
+
+    <div id="resultArea"></div>
+</div>
+
+<script>
+    // عند الفحص المحلي استخدم: http://127.0.0.1:8000
+    // عند الرفع أونلاين استبدله برابط Koyeb (مثال: https://your-app.koyeb.app)
+    const BACKEND_URL = "http://127.0.0.1:8000"; 
+
+    async function saveLink() {
+        const url = document.getElementById('urlInput').value;
+        if(!url) return alert("من فضلك أدخل الرابط أولاً!");
+
+        try {
+            const response = await fetch(`${BACKEND_URL}/add-link`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: url })
+            });
+            const data = await response.json();
+            if(data.status === "success") {
+                alert(`تم الحفظ بنجاح!\nالمحتوى: ${data.data.title}\nالوقت المقدر: ${data.data.estimated_read_time} دقيقة.`);
+                document.getElementById('urlInput').value = "";
+            }
+        } catch (error) {
+            alert("حدث خطأ أثناء الاتصال بالسيرفر الخلفي.");
+        }
+    }
+
+    function getSmartRecommendation() {
+        const availableTime = parseInt(document.getElementById('timeSelect').value);
+        const environment = document.getElementById('noiseSelect').value;
+        const resultArea = document.getElementById('resultArea');
+        
+        resultArea.innerHTML = "<h4>الوجبة المعرفية المقترحة لك الآن:</h4>";
+
+        let items = [
+            { title: "أساسيات الفهرسة الذكية في قواعد البيانات", time: 8, type: "article" },
+            { title: "شرح معمق لهندسة البرمجيات النظيفة", time: 12, type: "video" }
+        ];
+
+        items.forEach(item => {
+            if(item.time <= availableTime) {
+                if (environment === "noisy_no_headphones" && item.type === "video") return; 
+
+                let cardHtml = `
+                    <div class="card">
+                        <strong>${item.title}</strong><br>
+                        <small>⏱️ ${item.time} دقائق | النوع: ${item.type === 'video' ? '🎥 فيديو' : '📝 مقال'}</small>
+                `;
+
+                if (environment === "noisy_with_headphones" && item.type === "video") {
+                    cardHtml += `
+                        <div class="warning-badge">
+                            💡 **ملاحظة النظام:** الأجواء صاخبة حولك، تم السماح بهذا الفيديو لأنك ترتدي السماعات. تأكد من رفع الصوت لعزل الضجيج.
+                        </div>`;
+                }
+
+                cardHtml += `</div>`;
+                resultArea.innerHTML += cardHtml;
+            }
+        });
+    }
+</script>
 </body>
 </html>
