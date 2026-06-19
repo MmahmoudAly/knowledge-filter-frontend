@@ -63,75 +63,102 @@
     const BACKEND_URL = "https://mmahmoudaly-knowledge-filter-backend.hf.space";
     async function saveLink() {
         const url = document.getElementById('urlInput').value;
-    if(!url) return alert("من فضلك أدخل الرابط أولاً!");
+        if(!url) return alert("من فضلك أدخل الرابط أولاً!");
 
-    // تغيير نص الزر مؤقتاً ليعرف المستخدم أن النظام يعمل
-    const btn = document.querySelector("button[onclick='saveLink()']");
-    const originalText = btn.innerHTML;
-    btn.innerHTML = "جاري الفحص والحفظ... ⏳";
-    btn.disabled = true;
+        const btn = document.querySelector("button[onclick='saveLink()']");
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "جاري الفحص والحفظ... ⏳";
+        btn.disabled = true;
 
-    try {
-        console.log("جاري إرسال الطلب إلى:", `${BACKEND_URL}/add-link`);
-        const response = await fetch(`${BACKEND_URL}/add-link`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: url })
-        });
+        try {
+            const response = await fetch(`${BACKEND_URL}/add-link`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: url })
+            });
 
-        console.log("حالة الرد من السيرفر:", response.status);
-        const data = await response.json();
-        console.log("البيانات المستلمة:", data);
+            const data = await response.json();
 
-        if(data.status === "success" || response.ok) {
-            alert(`🎉 تم الحفظ بنجاح عالي!\nالمحتوى: ${data.data?.title || "رابط مضاف"}\nالوقت المقدر: ${data.data?.estimated_read_time || 5} دقائق.`);
-            document.getElementById('urlInput').value = "";
-        } else {
-            alert("السيرفر استجاب ولكن حدثت مشكلة في معالجة البيانات.");
+            if(data.status === "success") {
+                alert(`🎉 تم الحفظ بنجاح!\nالمحتوى: ${data.data.title}\nالوقت المقدر: ${data.data.estimated_read_time} دقيقة.`);
+                document.getElementById('urlInput').value = "";
+            } else if (data.status === "duplicate") {
+                // التعامل الذكي مع تكرار الروابط
+                alert(`💡 تنبيه: ${data.message}`);
+                document.getElementById('urlInput').value = "";
+            } else {
+                alert("السيرفر استجاب ولكن حدثت مشكلة في معالجة البيانات.");
+            }
+        } catch (error) {
+            alert("تعذر الاتصال بالسيرفر الخارجي.");
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
-    } catch (error) {
-        console.error("تفاصيل الخطأ:", error);
-        alert("تعذر الاتصال بالسيرفر. تأكد من أن سيرفر Hugging Face في وضع Running ولم يتوقف.");
-    } finally {
-        // إعادة الزر لوضعه الطبيعي
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }
     }
 
-    function getSmartRecommendation() {
+    async function getSmartRecommendation() {
         const availableTime = parseInt(document.getElementById('timeSelect').value);
         const environment = document.getElementById('noiseSelect').value;
         const resultArea = document.getElementById('resultArea');
-        
-        resultArea.innerHTML = "<h4>الوجبة المعرفية المقترحة لك الآن:</h4>";
 
-        let items = [
-            { title: "أساسيات الفهرسة الذكية في قواعد البيانات", time: 8, type: "article" },
-            { title: "شرح معمق لهندسة البرمجيات النظيفة", time: 12, type: "video" }
-        ];
+        resultArea.innerHTML = "<h4 style='color:#2c3e50;'>الوجبة المعرفية المقترحة لك الآن:</h4>";
 
-        items.forEach(item => {
-            if(item.time <= availableTime) {
-                if (environment === "noisy_no_headphones" && item.type === "video") return; 
+        try {
+            // إرسال السياق الحالي للسيرفر لجلب الاقتراحات الحقيقية الديناميكية
+            const response = await fetch(`${BACKEND_URL}/get-recommendations`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    available_time: availableTime,
+                    environment: environment
+                })
+            });
 
-                let cardHtml = `
-                    <div class="card">
-                        <strong>${item.title}</strong><br>
-                        <small>⏱️ ${item.time} دقائق | النوع: ${item.type === 'video' ? '🎥 فيديو' : '📝 مقال'}</small>
-                `;
+            const result = await response.json();
 
-                if (environment === "noisy_with_headphones" && item.type === "video") {
-                    cardHtml += `
-                        <div class="warning-badge">
-                            💡 **ملاحظة النظام:** الأجواء صاخبة حولك، تم السماح بهذا الفيديو لأنك ترتدي السماعات. تأكد من رفع الصوت لعزل الضجيج.
+            if (result.status === "success") {
+                const recommendedLinks = result.data;
+
+                // التعامل مع الحالة الفارغة (إذا لم يجد أي روابط تناسب المعايير)
+                if (recommendedLinks.length === 0) {
+                    resultArea.innerHTML += `
+                        <div style="background-color: #f9f9f9; border: 1px dashed #ccc; padding: 20px; text-align: center; border-radius: 6px; color: #7f8c8d; margin-top: 15px;">
+                            ✨ مصفاتك فارغة حالياً! أو ربما الروابط المخزنة تتطلب وقتاً أطول من وقتك المتاح الآن. أضف روابط جديدة أو تصفح بقية روابطك لاحقاً.
                         </div>`;
+                    return;
                 }
 
-                cardHtml += `</div>`;
-                resultArea.innerHTML += cardHtml;
+                // بناء كروت الروابط الحقيقية وجعل العنوان قابلاً للضغط والتوجيه
+                recommendedLinks.forEach(item => {
+                    let cardHtml = `
+                        <div class="card">
+                            <strong>
+                                <a href="${item.url}" target="_blank" style="color: #2980b9; text-decoration: none; border-bottom: 1px dashed #2980b9;">
+                                    🔗 ${item.title}
+                                </a>
+                            </strong><br>
+                            <small style="display:block; margin-top:5px; color:#7f8c8d;">⏱️ ${item.estimated_read_time} دقائق | النوع: ${item.content_type === 'video' ? '🎥 فيديو' : '📝 مقال'}</small>
+                    `;
+
+                    if (environment === "noisy_with_headphones" && item.content_type === "video") {
+                        cardHtml += `
+                            <div class="warning-badge">
+                                💡 <strong>ملاحظة النظام:</strong> الأجواء صاخبة حولك، تم ترشيح هذا الفيديو لأنك ترتدي السماعات. تأكد من عزل الضجيج.
+                            </div>`;
+                    }
+
+                    cardHtml += `</div>`;
+                    resultArea.innerHTML += cardHtml;
+                });
+            } else {
+                resultArea.innerHTML += "<p style='color:red;'>حدث خطأ أثناء جلب البيانات من السيرفر.</p>";
             }
-        });
+
+        } catch (error) {
+            console.error(error);
+            resultArea.innerHTML += "<p style='color:red;'>تعذر الاتصال بالسيرفر. تأكد من تشغيل الـ Backend.</p>";
+        }
     }
 </script>
 </body>
